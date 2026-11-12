@@ -2,14 +2,8 @@
 -- Apply this migration using a least-privilege application role, never a superuser.
 -- The application role must be NOSUPERUSER NOBYPASSRLS and must own the tables.
 
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'wasel_app') THEN
-    CREATE ROLE wasel_app LOGIN NOSUPERUSER NOBYPASSRLS;
-  END IF;
-END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'wasel_app') THEN CREATE ROLE wasel_app LOGIN NOSUPERUSER NOBYPASSRLS; END IF; END $$;
 
--- Enable and force RLS on every tenant-owned table.
 ALTER TABLE "Tenant" ENABLE ROW LEVEL SECURITY; ALTER TABLE "Tenant" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Store" ENABLE ROW LEVEL SECURITY; ALTER TABLE "Store" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Product" ENABLE ROW LEVEL SECURITY; ALTER TABLE "Product" FORCE ROW LEVEL SECURITY;
@@ -68,10 +62,10 @@ CREATE POLICY tenant_isolation_assignment ON "ShipmentAssignment" USING (wasel_r
 DROP POLICY IF EXISTS tenant_isolation_attempt ON "DeliveryAttempt";
 CREATE POLICY tenant_isolation_attempt ON "DeliveryAttempt" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_pod ON "ProofOfDelivery";
-CREATE POLICY tenant_isolation_pod ON "ProofOfDelivery" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
+CREATE POLICY tenant_isolation_pod ON "ProofOfDelivery" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_cod_collection ON "CodCollection";
 CREATE POLICY tenant_isolation_cod_collection ON "CodCollection" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_settlement_batch ON "SettlementBatch";
 CREATE POLICY tenant_isolation_settlement_batch ON "SettlementBatch" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_settlement_link ON "SettlementBatchCollection";
-CREATE POLICY tenant_isolation_settlement_link ON "SettlementBatchCollection" USING (wasel_rls_bypass() OR EXISTS (SELECT 1 FROM "SettlementBatch" b WHERE b.id = "SettlementBatchCollection"."settlementBatchId" AND b."tenantId" = wasel_current_tenant_id())) WITH CHECK (wasel_rls_bypass() OR EXISTS (SELECT 1 FROM "SettlementBatch" b WHERE b.id = "SettlementBatchCollection"."settlementBatchId" AND b."tenantId" = wasel_current_tenant_id()));
+CREATE POLICY tenant_isolation_settlement_link ON "SettlementBatchCollection" USING (wasel_rls_bypass() OR EXISTS (SELECT 1 FROM "SettlementBatch" b JOIN "CodCollection" c ON c.id = "SettlementBatchCollection"."collectionId" WHERE b.id = "SettlementBatchCollection"."settlementBatchId" AND b."tenantId" = wasel_current_tenant_id() AND c."tenantId" = wasel_current_tenant_id())) WITH CHECK (wasel_rls_bypass() OR EXISTS (SELECT 1 FROM "SettlementBatch" b JOIN "CodCollection" c ON c.id = "SettlementBatchCollection"."collectionId" WHERE b.id = "SettlementBatchCollection"."settlementBatchId" AND b."tenantId" = wasel_current_tenant_id() AND c."tenantId" = wasel_current_tenant_id()));
