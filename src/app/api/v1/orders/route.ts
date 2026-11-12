@@ -29,12 +29,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { membership } = await authenticatedMembership("order:create");
+    const { user, membership } = await authenticatedMembership("order:create");
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const rate = apiRateLimiter.check(`${membership.tenantId}:${ip}`, 600, 60_000);
     const parsed = createOrderSchema.safeParse(await request.json());
     if (!parsed.success) throw new AppError("VALIDATION_ERROR", "Invalid order input", 422, { issues: parsed.error.issues });
-    const result = await createOrder({ ...parsed.data, tenantId: membership.tenantId, actorType: "API_KEY" });
+    const result = await createOrder({ ...parsed.data, tenantId: membership.tenantId, actorType: "USER", actorUserId: user.id });
     return Response.json({ data: result }, { status: 201, headers: { "X-RateLimit-Remaining": String(rate.remaining) } });
   } catch (error) {
     return errorResponse(error);
