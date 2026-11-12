@@ -1,6 +1,6 @@
 {
   "openapi": "3.1.0",
-  "info": { "title": "WASEL API", "version": "1.0.0", "description": "Versioned order, shipment, dispatch, tracking, and settlement-exposure API for WASEL. Authentication uses sessions for the operator console and API keys for external integrations." },
+  "info": { "title": "WASEL API", "version": "1.0.0", "description": "Versioned order, shipment, dispatch, audit, tracking, and settlement-exposure API for WASEL. Authentication uses sessions for the operator console and API keys for external integrations." },
   "servers": [{ "url": "/api/v1" }],
   "security": [{ "bearerAuth": [] }],
   "paths": {
@@ -13,6 +13,7 @@
     "/shipments": { "get": { "responses": { "200": { "description": "Tenant-scoped shipment queue" }, "403": { "$ref": "#/components/responses/ErrorResponse" } } }, "post": { "responses": { "201": { "description": "Shipment created for an order" }, "409": { "$ref": "#/components/responses/ErrorResponse" } } } },
     "/shipments/{shipmentId}/status": { "post": { "parameters": [{ "$ref": "#/components/parameters/ShipmentId" }], "responses": { "200": { "description": "Shipment transition with optional delivery attempt and POD" }, "409": { "$ref": "#/components/responses/ErrorResponse" } } } },
     "/shipments/{shipmentId}/assign": { "post": { "parameters": [{ "$ref": "#/components/parameters/ShipmentId" }], "responses": { "200": { "description": "Courier assignment created" }, "403": { "$ref": "#/components/responses/ErrorResponse" }, "409": { "$ref": "#/components/responses/ErrorResponse" } } } },
+    "/audit": { "get": { "parameters": [{ "name": "entityType", "in": "query", "schema": { "type": "string" } }, { "name": "action", "in": "query", "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/ListResponse" }, "403": { "$ref": "#/components/responses/ErrorResponse" } } } },
     "/dispatch": { "get": { "responses": { "200": { "description": "Tenant-scoped dispatch queue" }, "403": { "$ref": "#/components/responses/ErrorResponse" } } } },
     "/settlements/exposure": { "get": { "responses": { "200": { "description": "Order-level COD exposure; not a reconciled settlement" }, "403": { "$ref": "#/components/responses/ErrorResponse" } } } },
     "/tracking/{token}": { "get": { "security": [], "parameters": [{ "$ref": "#/components/parameters/TrackingToken" }], "responses": { "200": { "description": "Customer-safe tracking response" }, "404": { "$ref": "#/components/responses/ErrorResponse" } } } }
