@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { formatMad } from "@/lib/money";
+import { operationState, type OperationLoadState } from "./operation-state";
 
 type Collection = { id: string; orderId: string; status: string; expectedAmount: string; collectedAmount: string | null; currency: string; createdAt: string };
 type Batch = { id: string; status: string; periodStart: string; periodEnd: string; grossCod: string; deliveryFees: string; adjustments: string; netAmount: string; currency: string; paymentReference: string | null };
-type LoadState = "loading" | "ready" | "unavailable" | "error";
 
 async function readJson<T>(url: string): Promise<{ response: Response; body?: { data: T } }> {
   const response = await fetch(url, { cache: "no-store" });
@@ -23,16 +23,16 @@ function statusClass(status: string): string {
 export default function SettlementOperations() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
-  const [collectionState, setCollectionState] = useState<LoadState>("loading");
-  const [batchState, setBatchState] = useState<LoadState>("loading");
+  const [collectionState, setCollectionState] = useState<OperationLoadState>("loading");
+  const [batchState, setBatchState] = useState<OperationLoadState>("loading");
 
   async function load() {
     setCollectionState("loading");
     setBatchState("loading");
     try {
       const [collectionResult, batchResult] = await Promise.all([readJson<Collection[]>("/api/v1/collections"), readJson<Batch[]>("/api/v1/settlement-batches")]);
-      setCollectionState(collectionResult.response.status === 503 ? "unavailable" : collectionResult.response.ok && collectionResult.body ? "ready" : "error");
-      setBatchState(batchResult.response.status === 503 ? "unavailable" : batchResult.response.ok && batchResult.body ? "ready" : "error");
+      setCollectionState(operationState(collectionResult.response.status, Boolean(collectionResult.body)));
+      setBatchState(operationState(batchResult.response.status, Boolean(batchResult.body)));
       if (collectionResult.body) setCollections(collectionResult.body.data);
       if (batchResult.body) setBatches(batchResult.body.data);
     } catch {
