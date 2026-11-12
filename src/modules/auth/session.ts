@@ -1,10 +1,15 @@
 import { cookies } from "next/headers";
-import type { PrismaClient } from "@prisma/client";
+import type { Language, PrismaClient } from "@prisma/client";
 import { createSessionToken, sha256 } from "./crypto";
 
 export const SESSION_COOKIE = "wasel_session";
 export const ACTIVE_TENANT_COOKIE = "wasel_active_tenant";
+export const LOCALE_COOKIE = "wasel_locale";
 const SESSION_DAYS = 30;
+
+export function isSupportedLocale(value: unknown): value is Language {
+  return value === "fr" || value === "ar";
+}
 
 export async function createSession(prisma: PrismaClient, userId: string): Promise<string> {
   const token = createSessionToken();
@@ -21,6 +26,11 @@ export async function setSessionCookie(token: string): Promise<void> {
 export async function setActiveTenantCookie(tenantId: string): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(ACTIVE_TENANT_COOKIE, tenantId, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: SESSION_DAYS * 24 * 60 * 60 });
+}
+
+export async function setLocaleCookie(locale: Language): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(LOCALE_COOKIE, locale, { httpOnly: false, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: SESSION_DAYS * 24 * 60 * 60 });
 }
 
 export async function revokeSession(prisma: PrismaClient, token: string): Promise<void> {
