@@ -18,7 +18,7 @@ enum PaymentMethod { COD PREPAID }
 enum PaymentStatus { PENDING PAID FAILED REFUNDED }
 enum ActorType { USER SYSTEM API_KEY COURIER CUSTOMER }
 enum CourierStatus { ACTIVE INACTIVE SUSPENDED }
-enum ShipmentStatus { CREATED READY_FOR_PICKUP ASSIGNED PICKED_UP IN_TRANSIT OUT_FOR_DELIVERY DELIVERED DELIVERY_FAILED RETURNED }
+enum ShipmentStatus { CREATED READY_FOR_PICKUP ASSIGNED PICKED_UP IN_TRANSIT OUT_FOR_DELIVERY DELIVERED DELIVERY_FAILED RETURNED CANCELLED }
 enum AssignmentStatus { ASSIGNED ACCEPTED DECLINED COMPLETED CANCELLED }
 enum DeliveryAttemptStatus { ATTEMPTED DELIVERED FAILED RESCHEDULED }
 
@@ -43,6 +43,7 @@ model Tenant {
   auditLogs       AuditLog[]
   couriers        Courier[]
   shipments       Shipment[]
+  shipmentAssignments ShipmentAssignment[]
   deliveryAttempts DeliveryAttempt[]
   proofOfDeliveries ProofOfDelivery[]
 }
