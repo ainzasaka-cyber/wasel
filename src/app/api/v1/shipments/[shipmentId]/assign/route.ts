@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import { getCurrentUser } from "@/modules/auth/current-user";
 import { hasPermission } from "@/lib/rbac";
 import { requestIdFrom, withRequestId } from "@/lib/request-id";
+import { appendAuditLogInTransaction } from "@/modules/integrations/persistence";
 import { withTenant } from "@/lib/tenant-context";
 
 export async function POST(request: Request, context: { params: Promise<{ shipmentId: string }> }) {
@@ -28,10 +29,9 @@ export async function POST(request: Request, context: { params: Promise<{ shipme
       await tx.shipmentAssignment.updateMany({ where: { tenantId: membership.tenantId, shipmentId, status: { in: ["ASSIGNED", "ACCEPTED"] } }, data: { status: "CANCELLED", cancelledAt: new Date() } });
       const assignment = await tx.shipmentAssignment.create({ data: { tenantId: membership.tenantId, shipmentId, courierId: courier.id, status: "ASSIGNED" } });
       await tx.shipment.update({ where: { id: shipmentId }, data: { courierId: courier.id, status: "ASSIGNED" } });
+      await appendAuditLogInTransaction(tx, { tenantId: membership.tenantId, actorUserId: user.id, action: "SHIPMENT_ASSIGNED", entityType: "Shipment", entityId: shipmentId, metadata: { courierId: courier.id, assignmentId: assignment.id }, requestId });
       return assignment;
     });
     return withRequestId(Response.json({ data: result }), requestId);
-  } catch (error) {
-    return withRequestId(errorResponse(error), requestId);
-  }
+  } catch (error) { return withRequestId(errorResponse(error), requestId); }
 }
