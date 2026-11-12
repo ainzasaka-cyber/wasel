@@ -1,10 +1,14 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 
 const SESSION_COOKIE = "wasel_session";
+const REQUEST_ID_HEADER = "x-request-id";
 
 export function middleware(request: NextRequest) {
+  const requestId = request.headers.get(REQUEST_ID_HEADER)?.trim() || randomUUID();
   const response = NextResponse.next();
+  response.headers.set(REQUEST_ID_HEADER, requestId);
   const headers = response.headers;
   headers.set("X-Frame-Options", "DENY");
   headers.set("X-Content-Type-Options", "nosniff");
@@ -17,15 +21,16 @@ export function middleware(request: NextRequest) {
   if (isProtectedAppRoute && !hasSessionCookie) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+    const redirect = NextResponse.redirect(loginUrl);
+    redirect.headers.set(REQUEST_ID_HEADER, requestId);
+    return redirect;
   }
-
   if (request.nextUrl.pathname === "/login" && hasSessionCookie) {
-    return NextResponse.redirect(new URL("/app", request.url));
+    const redirect = NextResponse.redirect(new URL("/app", request.url));
+    redirect.headers.set(REQUEST_ID_HEADER, requestId);
+    return redirect;
   }
   return response;
 }
 
-export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
-};
+export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"] };
