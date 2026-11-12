@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const labels: Record<string, string> = { CONFIRMATION_PENDING: "Passer en attente de confirmation", CONFIRMED: "Confirmer", CANCELLED: "Annuler", RESCHEDULED: "Reprogrammer", PREPARING: "Passer en préparation", READY_FOR_PICKUP: "Marquer prête", PICKED_UP: "Marquer enlevée", IN_TRANSIT: "Passer en transit", OUT_FOR_DELIVERY: "Sortir en livraison", DELIVERED: "Marquer livrée", DELIVERY_FAILED: "Marquer en échec", RETURNED: "Marquer retournée" };
 
 export default function OrderStatusActions({ orderId }: { orderId: string }) {
+  const router = useRouter();
   const [transitions, setTransitions] = useState<string[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [message, setMessage] = useState<string | null>(null);
@@ -31,7 +33,8 @@ export default function OrderStatusActions({ orderId }: { orderId: string }) {
     try {
       const response = await fetch(`/api/v1/orders/${orderId}/status`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
       if (!response.ok) throw new Error("change");
-      setMessage("Statut mis à jour. Rechargez la page pour voir l’historique complet.");
+      setMessage("Statut mis à jour.");
+      router.refresh();
       await load();
     } catch {
       setMessage("Impossible de modifier le statut pour le moment.");
