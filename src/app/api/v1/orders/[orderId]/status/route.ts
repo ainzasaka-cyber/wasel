@@ -15,11 +15,8 @@ export async function GET(request: Request, context: { params: Promise<{ orderId
     const membership = user.memberships[0];
     if (!membership || !hasPermission(membership.role, "order:read")) throw new AppError("FORBIDDEN", "Missing order:read permission", 403);
     const { orderId } = await context.params;
-    const transitions = await getAllowedOrderTransitions({ tenantId: membership.tenantId, orderId, role: membership.role });
-    return withRequestId(Response.json({ data: { transitions } }), requestId);
-  } catch (error) {
-    return withRequestId(errorResponse(error), requestId);
-  }
+    return withRequestId(Response.json({ data: { transitions: await getAllowedOrderTransitions({ tenantId: membership.tenantId, orderId, role: membership.role }) } }), requestId);
+  } catch (error) { return withRequestId(errorResponse(error), requestId); }
 }
 
 export async function POST(request: Request, context: { params: Promise<{ orderId: string }> }) {
@@ -34,9 +31,7 @@ export async function POST(request: Request, context: { params: Promise<{ orderI
     const statuses = ["ORDER_RECEIVED", "CONFIRMATION_PENDING", "CONFIRMED", "PREPARING", "READY_FOR_PICKUP", "PICKED_UP", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED", "DELIVERY_FAILED", "RESCHEDULED", "RETURNED"] as const;
     if (!body.status || !statuses.includes(body.status as (typeof statuses)[number])) throw new AppError("VALIDATION_ERROR", "Invalid order status", 422);
     const { orderId } = await context.params;
-    const result = await changeOrderStatus({ tenantId: membership.tenantId, orderId, nextStatus: body.status as OrderStatus, actorUserId: user.id, role: membership.role });
+    const result = await changeOrderStatus({ tenantId: membership.tenantId, orderId, nextStatus: body.status as OrderStatus, actorUserId: user.id, role: membership.role, requestId });
     return withRequestId(Response.json({ data: result }), requestId);
-  } catch (error) {
-    return withRequestId(errorResponse(error), requestId);
-  }
+  } catch (error) { return withRequestId(errorResponse(error), requestId); }
 }
