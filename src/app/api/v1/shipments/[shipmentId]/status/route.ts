@@ -25,9 +25,7 @@ export async function POST(request: Request, context: { params: Promise<{ shipme
     if (!hasPermission(membership.role, permission)) throw new AppError("FORBIDDEN", `Missing ${permission} permission`, 403);
     if (body.attempt && (!body.attempt.status || !attemptStatuses.includes(body.attempt.status as DeliveryAttemptStatus))) throw new AppError("VALIDATION_ERROR", "Invalid delivery attempt status", 422);
     const { shipmentId } = await context.params;
-    const result = await transitionShipment({ tenantId: membership.tenantId, shipmentId, nextStatus, actorUserId: user.id, attempt: body.attempt ? { status: body.attempt.status as DeliveryAttemptStatus, reason: body.attempt.reason, notes: body.attempt.notes } : undefined, pod: body.pod });
+    const result = await transitionShipment({ tenantId: membership.tenantId, shipmentId, nextStatus, actorUserId: user.id, requestId, attempt: body.attempt ? { status: body.attempt.status as DeliveryAttemptStatus, reason: body.attempt.reason, notes: body.attempt.notes } : undefined, pod: body.pod });
     return withRequestId(Response.json({ data: result }), requestId);
-  } catch (error) {
-    return withRequestId(errorResponse(error), requestId);
-  }
+  } catch (error) { return withRequestId(errorResponse(error), requestId); }
 }
