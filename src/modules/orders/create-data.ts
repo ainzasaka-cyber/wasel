@@ -1,12 +1,12 @@
 import { calculateOrderTotals } from "@/modules/orders/totals";
 import { createTrackingToken } from "@/modules/tracking/token";
+import { multiplyMoney } from "@/lib/money";
 
 export function buildOrderCreateData(input: {
   tenantId: string;
   storeId: string;
   customerId: string;
   orderNumber: string;
-  storeCode: string;
   externalOrderId?: string;
   customer: { fullName: string; phone: string; city: string };
   items: Array<{ productId?: string; sku: string; productName: string; unitPrice: string; quantity: number }>;
@@ -36,6 +36,6 @@ export function buildOrderCreateData(input: {
     deliveryCity: input.deliveryCity,
     trackingToken: createTrackingToken(),
     placedAt: new Date(),
-    items: { create: input.items.map((item) => ({ productId: item.productId, sku: item.sku, productName: item.productName, unitPrice: item.unitPrice, quantity: item.quantity, subtotal: item.unitPrice })) },
+    items: { create: input.items.map((item) => ({ productId: item.productId, sku: item.sku, productName: item.productName, unitPrice: item.unitPrice, quantity: item.quantity, subtotal: multiplyMoney(item.unitPrice, item.quantity) })) },
   };
 }
