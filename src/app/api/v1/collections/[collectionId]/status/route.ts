@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
 import { getCurrentUser } from "@/modules/auth/current-user";
 import { hasPermission } from "@/lib/rbac";
 import { requestIdFrom, withRequestId } from "@/lib/request-id";
-import { collectionStatuses, type CollectionStatus } from "@modules/settlements/rules";
+import { collectionStatuses, type CollectionStatus } from "@/modules/settlements/rules";
 import { transitionCollection } from "@/modules/settlements/repository";
 
 function isUuid(value: unknown): value is string { return typeof value === "string" && /^[0-9a-f-]{36}$/i.test(value); }
