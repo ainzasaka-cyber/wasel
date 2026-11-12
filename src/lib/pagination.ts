@@ -14,5 +14,6 @@ export function parsePagination(searchParams: URLSearchParams): { limit: number;
 export function page<T>(rows: T[], limit: number, getCursor: (row: T) => string) {
   const hasMore = rows.length > limit;
   const data = rows.slice(0, limit);
-  return { data, page: { nextCursor: hasMore && data.length ? getCursor(data[data.length - 1]) : null, hasMore, limit } };
+  const last = data[data.length - 1];
+  return { data, page: { nextCursor: hasMore && last ? getCursor(last) : null, hasMore, limit } };
 }
