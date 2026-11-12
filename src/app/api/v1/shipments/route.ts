@@ -12,9 +12,7 @@ export async function GET(request: Request) {
     const membership = user.memberships[0];
     if (!membership || !hasPermission(membership.role, "shipment:read")) throw new AppError("FORBIDDEN", "Missing shipment:read permission", 403);
     return withRequestId(Response.json({ data: await listShipmentQueue(membership.tenantId) }), requestId);
-  } catch (error) {
-    return withRequestId(errorResponse(error), requestId);
-  }
+  } catch (error) { return withRequestId(errorResponse(error), requestId); }
 }
 
 export async function POST(request: Request) {
@@ -26,8 +24,6 @@ export async function POST(request: Request) {
     if (!membership || !hasPermission(membership.role, "shipment:update")) throw new AppError("FORBIDDEN", "Missing shipment:update permission", 403);
     const body = await request.json() as { orderId?: string };
     if (!body.orderId) throw new AppError("VALIDATION_ERROR", "orderId is required", 422);
-    return withRequestId(Response.json({ data: await createShipmentForOrder({ tenantId: membership.tenantId, orderId: body.orderId }) }, { status: 201 }), requestId);
-  } catch (error) {
-    return withRequestId(errorResponse(error), requestId);
-  }
+    return withRequestId(Response.json({ data: await createShipmentForOrder({ tenantId: membership.tenantId, orderId: body.orderId, actorUserId: user.id, requestId }) }, { status: 201 }), requestId);
+  } catch (error) { return withRequestId(errorResponse(error), requestId); }
 }
