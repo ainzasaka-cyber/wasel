@@ -4,9 +4,11 @@ import { assertSameOrigin } from "@/lib/csrf";
 import { env } from "@/lib/env";
 import { getCurrentUser } from "@/modules/auth/current-user";
 import { hasPermission } from "@/lib/rbac";
+import { requestIdFrom, withRequestId } from "@/lib/request-id";
 import { changeOrderStatus, getAllowedOrderTransitions } from "@/modules/orders/status";
 
-export async function GET(_request: Request, context: { params: Promise<{ orderId: string }> }) {
+export async function GET(request: Request, context: { params: Promise<{ orderId: string }> }) {
+  const requestId = requestIdFrom(request);
   try {
     const user = await getCurrentUser();
     if (!user) throw new AppError("UNAUTHENTICATED", "Authentication required", 401);
@@ -14,13 +16,14 @@ export async function GET(_request: Request, context: { params: Promise<{ orderI
     if (!membership || !hasPermission(membership.role, "order:read")) throw new AppError("FORBIDDEN", "Missing order:read permission", 403);
     const { orderId } = await context.params;
     const transitions = await getAllowedOrderTransitions({ tenantId: membership.tenantId, orderId, role: membership.role });
-    return Response.json({ data: { transitions } });
+    return withRequestId(Response.json({ data: { transitions } }), requestId);
   } catch (error) {
-    return errorResponse(error);
+    return withRequestId(errorResponse(error), requestId);
   }
 }
 
 export async function POST(request: Request, context: { params: Promise<{ orderId: string }> }) {
+  const requestId = requestIdFrom(request);
   try {
     assertSameOrigin(request, env.APP_URL);
     const user = await getCurrentUser();
@@ -32,8 +35,8 @@ export async function POST(request: Request, context: { params: Promise<{ orderI
     if (!body.status || !statuses.includes(body.status as (typeof statuses)[number])) throw new AppError("VALIDATION_ERROR", "Invalid order status", 422);
     const { orderId } = await context.params;
     const result = await changeOrderStatus({ tenantId: membership.tenantId, orderId, nextStatus: body.status as OrderStatus, actorUserId: user.id, role: membership.role });
-    return Response.json({ data: result });
+    return withRequestId(Response.json({ data: result }), requestId);
   } catch (error) {
-    return errorResponse(error);
+    return withRequestId(errorResponse(error), requestId);
   }
 }
