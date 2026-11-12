@@ -62,7 +62,7 @@ CREATE POLICY tenant_isolation_assignment ON "ShipmentAssignment" USING (wasel_r
 DROP POLICY IF EXISTS tenant_isolation_attempt ON "DeliveryAttempt";
 CREATE POLICY tenant_isolation_attempt ON "DeliveryAttempt" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_pod ON "ProofOfDelivery";
-CREATE POLICY tenant_isolation_pod ON "ProofOfDelivery" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_bypass() OR "tenantId" = wasel_current_tenant_id());
+CREATE POLICY tenant_isolation_pod ON "ProofOfDelivery" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_cod_collection ON "CodCollection";
 CREATE POLICY tenant_isolation_cod_collection ON "CodCollection" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_settlement_batch ON "SettlementBatch";
