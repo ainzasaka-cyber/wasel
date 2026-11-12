@@ -19,9 +19,7 @@ export async function POST(request: Request, context: { params: Promise<{ orderI
     const body = await request.json() as { action?: string };
     if (!body.action || !actions.includes(body.action as (typeof actions)[number])) throw new AppError("VALIDATION_ERROR", "Invalid confirmation action", 422);
     const { orderId } = await context.params;
-    const result = await applyConfirmationAction({ tenantId: membership.tenantId, orderId, action: body.action as (typeof actions)[number], actorUserId: user.id });
+    const result = await applyConfirmationAction({ tenantId: membership.tenantId, orderId, action: body.action as (typeof actions)[number], actorUserId: user.id, requestId });
     return withRequestId(Response.json({ data: result }), requestId);
-  } catch (error) {
-    return withRequestId(errorResponse(error), requestId);
-  }
+  } catch (error) { return withRequestId(errorResponse(error), requestId); }
 }
