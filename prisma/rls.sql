@@ -50,7 +50,7 @@ CREATE POLICY tenant_isolation_tenant ON "Tenant" USING (wasel_rls_bypass() OR i
 DROP POLICY IF EXISTS tenant_isolation_store ON "Store";
 CREATE POLICY tenant_isolation_store ON "Store" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_product ON "Product";
-CREATE POLICY tenant_isolation_product ON "Product" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_bypass() OR "tenantId" = wasel_current_tenant_id());
+CREATE POLICY tenant_isolation_product ON "Product" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_customer ON "Customer";
 CREATE POLICY tenant_isolation_customer ON "Customer" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_order ON "Order";
