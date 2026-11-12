@@ -26,8 +26,7 @@ export function calculateReturnedFee(deliveryFee: string | Decimal): Decimal {
 }
 
 export function formatMad(value: string | Decimal, locale: "fr-MA" | "ar-MA" = "fr-MA"): string {
-  const fixed = money(value).toFixed(2);
-  const [integer, fraction] = fixed.split(".");
+  const [integer = "0", fraction = "00"] = money(value).toFixed(2).split(".");
   const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, locale === "fr-MA" ? " " : "٬");
   return `${grouped}${locale === "fr-MA" ? "," : "٫"}${fraction} MAD`;
 }
