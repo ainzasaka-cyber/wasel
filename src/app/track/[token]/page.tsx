@@ -1,0 +1,61 @@
+import { getPublicTracking } from "@/modules/tracking/service";
+import { TRACKING_STEPS, trackingProgress } from "@/modules/tracking/timeline";
+
+const labels: Record<(typeof TRACKING_STEPS)[number], string> = {
+  ORDER_RECEIVED: "Commande reçue",
+  CONFIRMED: "Confirmée",
+  PREPARING: "En préparation",
+  PICKED_UP: "Enlevée du marchand",
+  IN_TRANSIT: "En cours d’acheminement",
+  OUT_FOR_DELIVERY: "En cours de livraison",
+  DELIVERED: "Livrée",
+};
+
+export default async function TrackingPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
+  const tracking = await getPublicTracking(token);
+
+  if (!tracking) {
+    return (
+      <main className="min-h-screen bg-canvas px-5 py-12 text-text">
+        <section className="mx-auto max-w-[520px] rounded-[10px] border border-line bg-paper p-6">
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-faint">WASEL</p>
+          <h1 className="mt-3 text-[19px] font-semibold">Lien de suivi indisponible</h1>
+          <p className="mt-2 text-[13.5px] leading-6 text-muted">Ce lien n’est pas valide ou n’est plus disponible.</p>
+        </section>
+      </main>
+    );
+  }
+
+  const progress = trackingProgress(tracking.status);
+  return (
+    <main className="min-h-screen bg-canvas px-5 py-8 text-text">
+      <section className="mx-auto max-w-[620px] rounded-[10px] border border-line bg-paper p-5">
+        <header className="border-b border-line pb-4">
+          <p className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-faint">{tracking.store.name}</p>
+          <h1 className="mt-2 text-[19px] font-semibold">Suivi de votre commande</h1>
+          <p className="mt-1 font-mono text-[12.5px] text-muted" dir="ltr">{tracking.orderNumber}</p>
+        </header>
+        <ol className="mt-6 space-y-5">
+          {TRACKING_STEPS.map((step, index) => {
+            const done = index < progress;
+            const current = index === progress;
+            return (
+              <li key={step} className="flex items-start gap-3">
+                <span className={`mt-1 h-3 w-3 shrink-0 rounded-full border-2 ${done ? "border-cyan-600 bg-cyan-600" : current ? "border-cyan-500 bg-paper" : "border-line-strong bg-paper"}`} aria-hidden="true" />
+                <span>
+                  <strong className={`block text-[13.5px] ${current ? "font-semibold" : "font-medium"}`}>{labels[step]}</strong>
+                  {current && <span className="text-[11px] text-muted">Statut actuel</span>}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+        <dl className="mt-7 grid grid-cols-2 gap-3 border-t border-line pt-4 text-[12.5px]">
+          <div><dt className="text-faint">Ville</dt><dd className="mt-1 font-medium">{tracking.deliveryCity}</dd></div>
+          <div><dt className="text-faint">Commande passée</dt><dd className="mt-1 font-mono" dir="ltr">{tracking.placedAt.toLocaleDateString("fr-MA")}</dd></div>
+        </dl>
+      </section>
+    </main>
+  );
+}
