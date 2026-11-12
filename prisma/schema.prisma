@@ -17,6 +17,10 @@ enum Priority { LOW NORMAL HIGH URGENT }
 enum PaymentMethod { COD PREPAID }
 enum PaymentStatus { PENDING PAID FAILED REFUNDED }
 enum ActorType { USER SYSTEM API_KEY COURIER CUSTOMER }
+enum CourierStatus { ACTIVE INACTIVE SUSPENDED }
+enum ShipmentStatus { CREATED READY_FOR_PICKUP ASSIGNED PICKED_UP IN_TRANSIT OUT_FOR_DELIVERY DELIVERED DELIVERY_FAILED RETURNED }
+enum AssignmentStatus { ASSIGNED ACCEPTED DECLINED COMPLETED CANCELLED }
+enum DeliveryAttemptStatus { ATTEMPTED DELIVERED FAILED RESCHEDULED }
 
 model Tenant {
   id              String       @id @default(uuid()) @db.Uuid
@@ -37,6 +41,10 @@ model Tenant {
   idempotencyRecords IdempotencyRecord[]
   webhookEvents   WebhookEvent[]
   auditLogs       AuditLog[]
+  couriers        Courier[]
+  shipments       Shipment[]
+  deliveryAttempts DeliveryAttempt[]
+  proofOfDeliveries ProofOfDelivery[]
 }
 
 model User {
@@ -54,6 +62,7 @@ model User {
   orderEvents     OrderEvent[]
   createdApiKeys  ApiKey[]
   auditLogs       AuditLog[]
+  courierProfile  Courier?
 }
 
 model TenantMembership {
@@ -165,6 +174,7 @@ model Order {
   customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
   items           OrderItem[]
   events          OrderEvent[]
+  shipment        Shipment?
   @@unique([tenantId, orderNumber])
   @@unique([tenantId, externalOrderId])
   @@index([tenantId, status])
@@ -269,4 +279,92 @@ model AuditLog {
   @@index([tenantId, createdAt])
   @@index([tenantId, entityType, entityId])
   @@index([actorUserId, createdAt])
+}
+
+model Courier {
+  id          String        @id @default(uuid()) @db.Uuid
+  tenantId    String        @db.Uuid
+  userId      String?       @unique @db.Uuid
+  displayName String
+  phone       String
+  status      CourierStatus @default(ACTIVE)
+  vehicleType String?
+  vehiclePlate String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  shipments   Shipment[]
+  assignments ShipmentAssignment[]
+  @@unique([tenantId, phone])
+  @@index([tenantId, status])
+}
+
+model Shipment {
+  id             String         @id @default(uuid()) @db.Uuid
+  tenantId       String         @db.Uuid
+  orderId        String         @unique @db.Uuid
+  courierId      String?        @db.Uuid
+  status         ShipmentStatus @default(CREATED)
+  trackingNumber String         @unique @db.VarChar(64)
+  pickedUpAt     DateTime?
+  deliveredAt    DateTime?
+  failedAt       DateTime?
+  returnedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order          Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  courier        Courier?       @relation(fields: [courierId], references: [id], onDelete: SetNull)
+  assignments    ShipmentAssignment[]
+  attempts       DeliveryAttempt[]
+  proofOfDelivery ProofOfDelivery?
+  @@index([tenantId, status])
+  @@index([tenantId, courierId, status])
+}
+
+model ShipmentAssignment {
+  id          String           @id @default(uuid()) @db.Uuid
+  tenantId    String           @db.Uuid
+  shipmentId  String           @db.Uuid
+  courierId   String           @db.Uuid
+  status      AssignmentStatus @default(ASSIGNED)
+  assignedAt  DateTime         @default(now())
+  acceptedAt  DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  shipment    Shipment         @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  courier     Courier          @relation(fields: [courierId], references: [id], onDelete: Restrict)
+  @@index([tenantId, status, assignedAt])
+  @@index([shipmentId, assignedAt])
+}
+
+model DeliveryAttempt {
+  id          String                @id @default(uuid()) @db.Uuid
+  tenantId    String                @db.Uuid
+  shipmentId  String                @db.Uuid
+  status      DeliveryAttemptStatus
+  reason      String?
+  notes       String?
+  attemptedAt DateTime              @default(now())
+  tenant     Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  shipment   Shipment               @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  @@index([tenantId, attemptedAt])
+  @@index([shipmentId, attemptedAt])
+}
+
+model ProofOfDelivery {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @db.Uuid
+  shipmentId     String   @unique @db.Uuid
+  recipientName  String?
+  signatureUrl   String?
+  photoUrl       String?
+  latitude       Decimal? @db.Decimal(9, 6)
+  longitude      Decimal? @db.Decimal(9, 6)
+  capturedAt     DateTime @default(now())
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  shipment       Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  @@index([tenantId, capturedAt])
 }
