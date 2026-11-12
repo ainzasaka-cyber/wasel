@@ -1,6 +1,12 @@
-/* Semantic status tokens are intentionally scoped to status pills only. */
+/* Semantic status tokens are scoped to status pills only. */
 .status-ok { color: var(--color-ok); background: #e8f6ef; border-color: #a9dcc4; }
 .status-warn { color: var(--color-warn); background: #fdf4e3; border-color: #ebd49b; }
-.status-danger { color: var(--color-danger); background: #fce dec; border-color: #f0c3c0; }
+.status-danger { color: var(--color-danger); background: #fcebec; border-color: #f0c3c0; }
 .status-progress { color: #1f5f8b; background: #eaf2fa; border-color: #b9d1e5; }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
