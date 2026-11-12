@@ -1,0 +1,37 @@
+import { AppError, errorResponse } from "@/lib/errors";
+import { getCurrentUser } from "@/modules/auth/current-user";
+import { hasPermission } from "@/lib/rbac";
+import { requestIdFrom, withRequestId } from "@/lib/request-id";
+import { createSettlementBatch, listSettlementBatches } from "@/modules/settlements/batches-repository";
+
+function isUuid(value: unknown): value is string { return typeof value === "string" && /^[0-9a-f-]{36}$/i.test(value); }
+function isAmount(value: unknown): value is string { return typeof value === "string" && /^(?:0|[1-9]\d{0,9})(?:\.\d{1,2})?$/.test(value); }
+function isDate(value: unknown): value is string { return typeof value === "string" && !Number.isNaN(Date.parse(value)); }
+
+export async function GET(request: Request) {
+  const requestId = requestIdFrom(request);
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new AppError("UNAUTHENTICATED", "Authentication required", 401);
+    const membership = user.memberships[0];
+    if (!membership || !hasPermission(membership.role, "settlement:read")) throw new AppError("FORBIDDEN", "Missing settlement:read permission", 403);
+    return withRequestId(Response.json({ data: await listSettlementBatches(membership.tenantId) }), requestId);
+  } catch (error) { return withRequestId(errorResponse(error), requestId); }
+}
+
+export async function POST(request: Request) {
+  const requestId = requestIdFrom(request);
+  try {
+    const user = await getCurrentUser();
+    if (!user) throw new AppError("UNAUTHENTICATED", "Authentication required", 401);
+    const membership = user.memberships[0];
+    if (!membership || !hasPermission(membership.role, "settlement:manage")) throw new AppError("FORBIDDEN", "Missing settlement:manage permission", 403);
+    const body = await request.json() as { periodStart?: unknown; periodEnd?: unknown; collectionIds?: unknown; deliveryFees?: unknown; adjustments?: unknown; currency?: unknown };
+    if (!isDate(body.periodStart) || !isDate(body.periodEnd)) throw new AppError("VALIDATION_ERROR", "periodStart and periodEnd must be valid dates", 422);
+    if (!Array.isArray(body.collectionIds) || body.collectionIds.length === 0 || body.collectionIds.length > 100 || !body.collectionIds.every(isUuid)) throw new AppError("VALIDATION_ERROR", "collectionIds must contain 1 to 100 UUIDs", 422);
+    if (!isAmount(body.deliveryFees) || (body.adjustments !== undefined && (typeof body.adjustments !== "string" || !/^-?(?:0|[1-9]\d{0,9})(?:\.\d{1,2})?$/.test(body.adjustments)))) throw new AppError("VALIDATION_ERROR", "Invalid settlement amounts", 422);
+    if (body.currency !== undefined && (typeof body.currency !== "string" || !/^[A-Z]{3}$/.test(body.currency))) throw new AppError("VALIDATION_ERROR", "currency must be a three-letter code", 422);
+    const data = await createSettlementBatch({ tenantId: membership.tenantId, periodStart: new Date(body.periodStart), periodEnd: new Date(body.periodEnd), collectionIds: body.collectionIds, deliveryFees: body.deliveryFees, adjustments: body.adjustments, currency: body.currency as string | undefined });
+    return withRequestId(Response.json({ data }, { status: 201 }), requestId);
+  } catch (error) { return withRequestId(errorResponse(error), requestId); }
+}
