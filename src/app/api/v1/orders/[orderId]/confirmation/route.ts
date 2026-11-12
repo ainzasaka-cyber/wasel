@@ -4,10 +4,12 @@ import { hasPermission } from "@/lib/rbac";
 import { AppError, errorResponse } from "@/lib/errors";
 import { assertSameOrigin } from "@/lib/csrf";
 import { env } from "@/lib/env";
+import { requestIdFrom, withRequestId } from "@/lib/request-id";
 
 const actions = ["confirm", "cancel", "reschedule"] as const;
 
 export async function POST(request: Request, context: { params: Promise<{ orderId: string }> }) {
+  const requestId = requestIdFrom(request);
   try {
     assertSameOrigin(request, env.APP_URL);
     const user = await getCurrentUser();
@@ -18,8 +20,8 @@ export async function POST(request: Request, context: { params: Promise<{ orderI
     if (!body.action || !actions.includes(body.action as (typeof actions)[number])) throw new AppError("VALIDATION_ERROR", "Invalid confirmation action", 422);
     const { orderId } = await context.params;
     const result = await applyConfirmationAction({ tenantId: membership.tenantId, orderId, action: body.action as (typeof actions)[number], actorUserId: user.id });
-    return Response.json({ data: result });
+    return withRequestId(Response.json({ data: result }), requestId);
   } catch (error) {
-    return errorResponse(error);
+    return withRequestId(errorResponse(error), requestId);
   }
 }
