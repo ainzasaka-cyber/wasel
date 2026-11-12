@@ -3,6 +3,7 @@ import type { PrismaClient } from "@prisma/client";
 import { createSessionToken, sha256 } from "./crypto";
 
 export const SESSION_COOKIE = "wasel_session";
+export const ACTIVE_TENANT_COOKIE = "wasel_active_tenant";
 const SESSION_DAYS = 30;
 
 export async function createSession(prisma: PrismaClient, userId: string): Promise<string> {
@@ -14,13 +15,12 @@ export async function createSession(prisma: PrismaClient, userId: string): Promi
 
 export async function setSessionCookie(token: string): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: SESSION_DAYS * 24 * 60 * 60,
-  });
+  cookieStore.set(SESSION_COOKIE, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: SESSION_DAYS * 24 * 60 * 60 });
+}
+
+export async function setActiveTenantCookie(tenantId: string): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.set(ACTIVE_TENANT_COOKIE, tenantId, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: SESSION_DAYS * 24 * 60 * 60 });
 }
 
 export async function revokeSession(prisma: PrismaClient, token: string): Promise<void> {
@@ -28,8 +28,5 @@ export async function revokeSession(prisma: PrismaClient, token: string): Promis
 }
 
 export async function getSessionUser(prisma: PrismaClient, token: string) {
-  return prisma.session.findFirst({
-    where: { tokenHash: sha256(token), revokedAt: null, expiresAt: { gt: new Date() } },
-    select: { user: { select: { id: true, email: true, fullName: true, locale: true, memberships: { select: { tenantId: true, role: true } } } } },
-  });
+  return prisma.session.findFirst({ where: { tokenHash: sha256(token), revokedAt: null, expiresAt: { gt: new Date() } }, select: { user: { select: { id: true, email: true, fullName: true, locale: true, memberships: { select: { tenantId: true, role: true, tenant: { select: { name: true, slug: true } } } } } } } });
 }
