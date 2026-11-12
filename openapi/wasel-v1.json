@@ -1,0 +1,30 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "WASEL API",
+    "version": "1.0.0",
+    "description": "Versioned order, shipment, tracking, and webhook API for WASEL. Authentication uses API keys, and POST order creation supports Idempotency-Key."
+  },
+  "servers": [{ "url": "/api/v1" }],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/health": { "get": { "security": [], "responses": { "200": { "description": "Service health" } } } },
+    "/orders": {
+      "get": { "responses": { "200": { "$ref": "#/components/responses/ListResponse" } } },
+      "post": { "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }], "responses": { "201": { "description": "Order created" }, "409": { "$ref": "#/components/responses/ErrorResponse" } } }
+    },
+    "/tracking/{token}": { "get": { "security": [], "parameters": [{ "name": "token", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Customer-safe tracking response" }, "404": { "$ref": "#/components/responses/ErrorResponse" } } } }
+  },
+  "components": {
+    "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "wasel_live_prefix_secret" } },
+    "parameters": { "IdempotencyKey": { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string", "minLength": 1 } } },
+    "responses": {
+      "ErrorResponse": { "description": "Stable WASEL error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+      "ListResponse": { "description": "Cursor-paginated result", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/List" } } } }
+    },
+    "schemas": {
+      "Error": { "type": "object", "required": ["error"], "properties": { "error": { "type": "object", "required": ["code", "message", "details"], "properties": { "code": { "type": "string" }, "message": { "type": "string" }, "details": { "type": "object" } } } } },
+      "List": { "type": "object", "required": ["data", "page"], "properties": { "data": { "type": "array", "items": {} }, "page": { "type": "object", "required": ["nextCursor", "hasMore", "limit"], "properties": { "nextCursor": { "type": ["string", "null"] }, "hasMore": { "type": "boolean" }, "limit": { "type": "integer" } } } } }
+    }
+  }
+}
