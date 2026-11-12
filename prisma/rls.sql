@@ -16,7 +16,6 @@ ALTER TABLE "Store" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Store" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Product" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Product" FORCE ROW LEVEL SECURITY;
-ALTER TABLE "Product" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Customer" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Customer" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Order" ENABLE ROW LEVEL SECURITY;
@@ -51,7 +50,7 @@ CREATE POLICY tenant_isolation_tenant ON "Tenant" USING (wasel_rls_bypass() OR i
 DROP POLICY IF EXISTS tenant_isolation_store ON "Store";
 CREATE POLICY tenant_isolation_store ON "Store" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_product ON "Product";
-CREATE POLICY tenant_isolation_product ON "Product" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
+CREATE POLICY tenant_isolation_product ON "Product" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_customer ON "Customer";
 CREATE POLICY tenant_isolation_customer ON "Customer" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_order ON "Order";
