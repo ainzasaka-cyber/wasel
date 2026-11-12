@@ -3,21 +3,33 @@
   "info": {
     "title": "WASEL API",
     "version": "1.0.0",
-    "description": "Versioned order, shipment, tracking, and webhook API for WASEL. Authentication uses API keys, and POST order creation supports Idempotency-Key."
+    "description": "Versioned order, dispatch, tracking, and settlement-exposure API for WASEL. Authentication uses sessions for the operator console and API keys for future external integrations."
   },
   "servers": [{ "url": "/api/v1" }],
   "security": [{ "bearerAuth": [] }],
   "paths": {
-    "/health": { "get": { "security": [], "responses": { "200": { "description": "Service health" } } } },
+    "/health": { "get": { "security": [], "responses": { "200": { "description": "Service health" }, "503": { "description": "Database unavailable" } } } },
+    "/openapi.json": { "get": { "security": [], "responses": { "200": { "description": "OpenAPI document" } } } },
     "/orders": {
-      "get": { "responses": { "200": { "$ref": "#/components/responses/ListResponse" } } },
-      "post": { "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }], "responses": { "201": { "description": "Order created" }, "409": { "$ref": "#/components/responses/ErrorResponse" } } }
+      "get": { "responses": { "200": { "$ref": "#/components/responses/ListResponse" }, "401": { "$ref": "#/components/responses/ErrorResponse" }, "403": { "$ref": "#/components/responses/ErrorResponse" } } },
+      "post": { "responses": { "201": { "description": "Order created" }, "409": { "$ref": "#/components/responses/ErrorResponse" } } }
     },
-    "/tracking/{token}": { "get": { "security": [], "parameters": [{ "name": "token", "in": "path", "required": true, "schema": { "type": "string" } }], "responses": { "200": { "description": "Customer-safe tracking response" }, "404": { "$ref": "#/components/responses/ErrorResponse" } } } }
+    "/orders/{orderId}": { "get": { "parameters": [{ "$ref": "#/components/parameters/OrderId" }], "responses": { "200": { "description": "Tenant-scoped order detail" }, "404": { "$ref": "#/components/responses/ErrorResponse" } } } },
+    "/orders/{orderId}/status": {
+      "get": { "parameters": [{ "$ref": "#/components/parameters/OrderId" }], "responses": { "200": { "description": "Role-allowed transitions" }, "403": { "$ref": "#/components/responses/ErrorResponse" } } },
+      "post": { "parameters": [{ "$ref": "#/components/parameters/OrderId" }], "responses": { "200": { "description": "Status changed and event appended" }, "409": { "$ref": "#/components/responses/ErrorResponse" } } }
+    },
+    "/orders/{orderId}/confirmation": { "post": { "parameters": [{ "$ref": "#/components/parameters/OrderId" }], "responses": { "200": { "description": "Confirmation action applied" }, "409": { "$ref": "#/components/responses/ErrorResponse" } } } },
+    "/dispatch": { "get": { "responses": { "200": { "description": "Tenant-scoped dispatch queue" }, "403": { "$ref": "#/components/responses/ErrorResponse" } } } },
+    "/settlements/exposure": { "get": { "responses": { "200": { "description": "Order-level COD exposure; not a reconciled settlement" }, "403": { "$ref": "#/components/responses/ErrorResponse" } } } },
+    "/tracking/{token}": { "get": { "security": [], "parameters": [{ "$ref": "#/components/parameters/TrackingToken" }], "responses": { "200": { "description": "Customer-safe tracking response" }, "404": { "$ref": "#/components/responses/ErrorResponse" } } } }
   },
   "components": {
     "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "wasel_live_prefix_secret" } },
-    "parameters": { "IdempotencyKey": { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string", "minLength": 1 } } },
+    "parameters": {
+      "OrderId": { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "TrackingToken": { "name": "token", "in": "path", "required": true, "schema": { "type": "string" } }
+    },
     "responses": {
       "ErrorResponse": { "description": "Stable WASEL error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
       "ListResponse": { "description": "Cursor-paginated result", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/List" } } } }
