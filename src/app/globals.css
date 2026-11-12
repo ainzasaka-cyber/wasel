@@ -18,7 +18,7 @@
   --color-paper: #ffffff;
   --color-canvas: #f5f7f8;
   --color-line: #e3eaec;
-  --color-line-strong: #cbdaDE;
+  --color-line-strong: #cbdae0;
   --color-text: #10303a;
   --color-muted: #5b747c;
   --color-faint: #8aa0a6;
@@ -29,14 +29,14 @@
   --font-mono: "Courier New", monospace;
 }
 
-:root {
-  color: var(--color-text);
-  background: var(--color-canvas);
-  font-family: Arial, sans-serif;
-  font-synthesis: none;
-}
-
+:root { color: var(--color-text); background: var(--color-canvas); font-family: Arial, sans-serif; font-synthesis: none; }
 * { box-sizing: border-box; }
+html { min-width: 320px; }
 body { margin: 0; min-width: 320px; }
-button, input, select { font: inherit; }
+button, input, select, textarea { font: inherit; }
+button, a, input, select, textarea { touch-action: manipulation; }
 :focus-visible { outline: 3px solid var(--color-cyan-500); outline-offset: 2px; }
+[dir="rtl"] { text-align: right; }
+[dir="rtl"] .font-mono { letter-spacing: 0; }
+[dir="rtl"] input, [dir="rtl"] select, [dir="rtl"] textarea { text-align: right; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; } }
