@@ -27,6 +27,9 @@ ALTER TABLE "Shipment" ENABLE ROW LEVEL SECURITY; ALTER TABLE "Shipment" FORCE R
 ALTER TABLE "ShipmentAssignment" ENABLE ROW LEVEL SECURITY; ALTER TABLE "ShipmentAssignment" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "DeliveryAttempt" ENABLE ROW LEVEL SECURITY; ALTER TABLE "DeliveryAttempt" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "ProofOfDelivery" ENABLE ROW LEVEL SECURITY; ALTER TABLE "ProofOfDelivery" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "CodCollection" ENABLE ROW LEVEL SECURITY; ALTER TABLE "CodCollection" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "SettlementBatch" ENABLE ROW LEVEL SECURITY; ALTER TABLE "SettlementBatch" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "SettlementBatchCollection" ENABLE ROW LEVEL SECURITY; ALTER TABLE "SettlementBatchCollection" FORCE ROW LEVEL SECURITY;
 
 CREATE OR REPLACE FUNCTION wasel_current_tenant_id() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid $$;
 CREATE OR REPLACE FUNCTION wasel_rls_bypass() RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT current_setting('app.bypass_rls', true) = 'on' $$;
@@ -66,3 +69,9 @@ DROP POLICY IF EXISTS tenant_isolation_attempt ON "DeliveryAttempt";
 CREATE POLICY tenant_isolation_attempt ON "DeliveryAttempt" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_pod ON "ProofOfDelivery";
 CREATE POLICY tenant_isolation_pod ON "ProofOfDelivery" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
+DROP POLICY IF EXISTS tenant_isolation_cod_collection ON "CodCollection";
+CREATE POLICY tenant_isolation_cod_collection ON "CodCollection" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
+DROP POLICY IF EXISTS tenant_isolation_settlement_batch ON "SettlementBatch";
+CREATE POLICY tenant_isolation_settlement_batch ON "SettlementBatch" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
+DROP POLICY IF EXISTS tenant_isolation_settlement_link ON "SettlementBatchCollection";
+CREATE POLICY tenant_isolation_settlement_link ON "SettlementBatchCollection" USING (wasel_rls_bypass() OR EXISTS (SELECT 1 FROM "SettlementBatch" b WHERE b.id = "SettlementBatchCollection"."settlementBatchId" AND b."tenantId" = wasel_current_tenant_id())) WITH CHECK (wasel_rls_bypass() OR EXISTS (SELECT 1 FROM "SettlementBatch" b WHERE b.id = "SettlementBatchCollection"."settlementBatchId" AND b."tenantId" = wasel_current_tenant_id()));
