@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink-950: #041013;
+  --color-ink-900: #06181c;
+  --color-ink-850: #082024;
+  --color-ink-800: #0a2429;
+  --color-ink-700: #0e323a;
+  --color-teal-700: #0b4450;
+  --color-teal-600: #0e5561;
+  --color-cyan-700: #0b7383;
+  --color-cyan-600: #0e8c9e;
+  --color-cyan-500: #14a6ba;
+  --color-cyan-400: #22c3d6;
+  --color-cyan-300: #6fd9e6;
+  --color-cyan-100: #dcf3f7;
+  --color-cyan-50: #effafb;
+  --color-paper: #ffffff;
+  --color-canvas: #f5f7f8;
+  --color-line: #e3eaec;
+  --color-line-strong: #cb dade;
+  --color-text: #10303a;
+  --color-muted: #5b747c;
+  --color-faint: #8aa0a6;
+  --color-ok: #0f7a55;
+  --color-warn: #96650a;
+  --color-danger: #ac2d28;
+  --font-sans: Arial, sans-serif;
+  --font-mono: "Courier New", monospace;
+}
+
+:root {
+  color: var(--color-text);
+  background: var(--color-canvas);
+  font-family: Arial, sans-serif;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, input, select { font: inherit; }
+:focus-visible { outline: 3px solid var(--color-cyan-500); outline-offset: 2px; }
