@@ -1,4 +1,5 @@
 -- WASEL COD collections and merchant settlements.
+-- Apply this migration before prisma/rls.sql because the RLS source references these tables.
 -- Review against the generated Prisma migration before applying through Supabase MCP.
 -- This source is intentionally not executed while the Supabase project is inactive.
 
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS "SettlementBatchCollection" (
   PRIMARY KEY ("settlementBatchId", "collectionId")
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "SettlementBatch_tenant_period_key" ON "SettlementBatch" ("tenantId", "periodStart", "periodEnd");
+CREATE UNIQUE INDEX IF NOT EXISTS "SettlementBatchCollection_collection_key" ON "SettlementBatchCollection" ("collectionId");
 CREATE INDEX IF NOT EXISTS "SettlementBatch_tenant_status_idx" ON "SettlementBatch" ("tenantId", "status");
 CREATE INDEX IF NOT EXISTS "SettlementBatch_tenant_created_idx" ON "SettlementBatch" ("tenantId", "createdAt");
 
