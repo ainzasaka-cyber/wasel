@@ -33,6 +33,10 @@ model Tenant {
   customers       Customer[]
   orders          Order[]
   orderEvents     OrderEvent[]
+  apiKeys         ApiKey[]
+  idempotencyRecords IdempotencyRecord[]
+  webhookEvents   WebhookEvent[]
+  auditLogs       AuditLog[]
 }
 
 model User {
@@ -48,6 +52,8 @@ model User {
   memberships     TenantMembership[]
   sessions        Session[]
   orderEvents     OrderEvent[]
+  createdApiKeys  ApiKey[]
+  auditLogs       AuditLog[]
 }
 
 model TenantMembership {
@@ -199,4 +205,68 @@ model OrderEvent {
   actorUser     User?       @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
   @@index([orderId, createdAt])
   @@index([tenantId, createdAt])
+}
+
+model ApiKey {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @db.Uuid
+  createdById String?   @db.Uuid
+  name        String
+  prefix      String    @db.VarChar(32)
+  keyHash     String    @unique @db.VarChar(64)
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy   User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  @@unique([tenantId, prefix])
+  @@index([tenantId, revokedAt])
+}
+
+model IdempotencyRecord {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @db.Uuid
+  key            String   @db.VarChar(255)
+  requestHash    String   @db.VarChar(64)
+  responseStatus Int
+  responseBody   Json
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  @@unique([tenantId, key])
+  @@index([expiresAt])
+}
+
+model WebhookEvent {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @db.Uuid
+  provider       String    @db.VarChar(64)
+  externalEventId String   @db.VarChar(255)
+  eventType      String    @db.VarChar(128)
+  payload        Json
+  processedAt    DateTime?
+  failedAt       DateTime?
+  failureReason  String?
+  createdAt      DateTime  @default(now())
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  @@unique([tenantId, provider, externalEventId])
+  @@index([tenantId, processedAt])
+  @@index([tenantId, createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  actorUserId String?  @db.Uuid
+  action      String   @db.VarChar(128)
+  entityType  String   @db.VarChar(64)
+  entityId    String?  @db.Uuid
+  metadata    Json?
+  requestId   String?  @db.VarChar(128)
+  createdAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actorUser   User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entityType, entityId])
+  @@index([actorUserId, createdAt])
 }
