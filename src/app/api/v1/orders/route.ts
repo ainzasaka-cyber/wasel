@@ -6,6 +6,7 @@ import { listOrders, parseOrderStatus } from "@/modules/orders/list";
 import { createOrder } from "@/modules/orders/create-service";
 import { createOrderSchema } from "@/lib/validation";
 import { apiRateLimiter } from "@/lib/rate-limit";
+import { requestIdFrom, withRequestId } from "@/lib/request-id";
 
 async function authenticatedMembership(permission: "order:read" | "order:create") {
   const user = await getCurrentUser();
@@ -16,18 +17,20 @@ async function authenticatedMembership(permission: "order:read" | "order:create"
 }
 
 export async function GET(request: Request) {
+  const requestId = requestIdFrom(request);
   try {
     const { membership } = await authenticatedMembership("order:read");
     const url = new URL(request.url);
     const pagination = parsePagination(url.searchParams);
     const result = await listOrders({ tenantId: membership.tenantId, ...pagination, status: parseOrderStatus(url.searchParams.get("status")), query: url.searchParams.get("q")?.trim() || undefined });
-    return Response.json(result);
+    return withRequestId(Response.json(result), requestId);
   } catch (error) {
-    return errorResponse(error);
+    return withRequestId(errorResponse(error), requestId);
   }
 }
 
 export async function POST(request: Request) {
+  const requestId = requestIdFrom(request);
   try {
     const { user, membership } = await authenticatedMembership("order:create");
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
@@ -35,8 +38,8 @@ export async function POST(request: Request) {
     const parsed = createOrderSchema.safeParse(await request.json());
     if (!parsed.success) throw new AppError("VALIDATION_ERROR", "Invalid order input", 422, { issues: parsed.error.issues });
     const result = await createOrder({ ...parsed.data, tenantId: membership.tenantId, actorType: "USER", actorUserId: user.id });
-    return Response.json({ data: result }, { status: 201, headers: { "X-RateLimit-Remaining": String(rate.remaining) } });
+    return withRequestId(Response.json({ data: result }, { status: 201, headers: { "X-RateLimit-Remaining": String(rate.remaining) } }), requestId);
   } catch (error) {
-    return errorResponse(error);
+    return withRequestId(errorResponse(error), requestId);
   }
 }
