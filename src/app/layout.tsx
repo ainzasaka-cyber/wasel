@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
 import "./globals.css";
+import "./status.css";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "WASEL — Last-mile operations",
