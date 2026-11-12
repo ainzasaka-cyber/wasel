@@ -15,7 +15,7 @@
     "/shipments/{shipmentId}/assign": { "post": { "parameters": [{ "$ref": "#/components/parameters/ShipmentId" }], "responses": { "200": { "description": "Courier assignment created" }, "403": { "$ref": "#/components/responses/ErrorResponse" }, "409": { "$ref": "#/components/responses/ErrorResponse" } } } },
     "/audit": { "get": { "parameters": [{ "name": "entityType", "in": "query", "schema": { "type": "string" } }, { "name": "action", "in": "query", "schema": { "type": "string" } }], "responses": { "200": { "$ref": "#/components/responses/ListResponse" }, "403": { "$ref": "#/components/responses/ErrorResponse" } } } },
     "/dispatch": { "get": { "responses": { "200": { "description": "Tenant-scoped dispatch queue" }, "403": { "$ref": "#/components/responses/ErrorResponse" } } } },
-    "/settlements/exposure": { "get": { "responses": { "200": { "description": "Order-level COD exposure; not a reconciled settlement" }, "403": { "$ref": "#/components/responses/ErrorResponse" } } } },
+    "/settlements/exposure": { "get": { "responses": { "200": { "description": "Read-only order-level COD exposure. This is not a collected-COD ledger, reconciled settlement batch, or merchant payout." }, "403": { "$ref": "#/components/responses/ErrorResponse" } } } },
     "/tracking/{token}": { "get": { "security": [], "parameters": [{ "$ref": "#/components/parameters/TrackingToken" }], "responses": { "200": { "description": "Customer-safe tracking response" }, "404": { "$ref": "#/components/responses/ErrorResponse" } } } }
   },
   "components": {
