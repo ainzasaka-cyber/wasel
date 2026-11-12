@@ -16,6 +16,7 @@ ALTER TABLE "Store" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Store" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Product" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Product" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "Product" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Customer" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Customer" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Order" ENABLE ROW LEVEL SECURITY;
@@ -68,4 +69,4 @@ CREATE POLICY tenant_isolation_idempotency ON "IdempotencyRecord" USING (wasel_r
 DROP POLICY IF EXISTS tenant_isolation_webhook ON "WebhookEvent";
 CREATE POLICY tenant_isolation_webhook ON "WebhookEvent" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_audit_log ON "AuditLog";
-CREATE POLICY tenant_isolation_audit_log ON "AuditLog" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_bypass() OR "tenantId" = wasel_current_tenant_id());
+CREATE POLICY tenant_isolation_audit_log ON "AuditLog" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
