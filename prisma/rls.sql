@@ -9,7 +9,7 @@ BEGIN
   END IF;
 END $$;
 
--- Prisma creates quoted table names. Enable and force RLS on every current tenant table.
+-- Prisma creates quoted table names. Enable and force RLS on every tenant table.
 ALTER TABLE "Tenant" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Tenant" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Store" ENABLE ROW LEVEL SECURITY;
@@ -26,6 +26,14 @@ ALTER TABLE "OrderEvent" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "OrderEvent" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "TenantMembership" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "TenantMembership" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "ApiKey" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ApiKey" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "IdempotencyRecord" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "IdempotencyRecord" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "WebhookEvent" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "WebhookEvent" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "AuditLog" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "AuditLog" FORCE ROW LEVEL SECURITY;
 
 CREATE OR REPLACE FUNCTION wasel_current_tenant_id() RETURNS uuid
 LANGUAGE sql STABLE AS $$
@@ -53,3 +61,11 @@ DROP POLICY IF EXISTS tenant_isolation_order_event ON "OrderEvent";
 CREATE POLICY tenant_isolation_order_event ON "OrderEvent" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
 DROP POLICY IF EXISTS tenant_isolation_membership ON "TenantMembership";
 CREATE POLICY tenant_isolation_membership ON "TenantMembership" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
+DROP POLICY IF EXISTS tenant_isolation_api_key ON "ApiKey";
+CREATE POLICY tenant_isolation_api_key ON "ApiKey" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
+DROP POLICY IF EXISTS tenant_isolation_idempotency ON "IdempotencyRecord";
+CREATE POLICY tenant_isolation_idempotency ON "IdempotencyRecord" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
+DROP POLICY IF EXISTS tenant_isolation_webhook ON "WebhookEvent";
+CREATE POLICY tenant_isolation_webhook ON "WebhookEvent" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id());
+DROP POLICY IF EXISTS tenant_isolation_audit_log ON "AuditLog";
+CREATE POLICY tenant_isolation_audit_log ON "AuditLog" USING (wasel_rls_bypass() OR "tenantId" = wasel_current_tenant_id()) WITH CHECK (wasel_bypass() OR "tenantId" = wasel_current_tenant_id());
